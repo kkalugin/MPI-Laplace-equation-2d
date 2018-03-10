@@ -3,7 +3,6 @@
 #include <math.h>
 
 
-
 int main(int argc, char *argv[]){
     double* A = NULL;
     double* B = NULL;
@@ -14,7 +13,7 @@ int main(int argc, char *argv[]){
 		int* pDispls = NULL;
 		double* ptrA = NULL;
 		double* ptrB = NULL;
-
+		
     int rank, size;
     int Asize = 12;
 	int rowCount;
@@ -23,13 +22,14 @@ int main(int argc, char *argv[]){
 	double Norm, MaxNorm;
 	double eps;
 	MPI_Status stat;
-
+	
 	
     MPI_Init(&argc, &argv);
 
     MPI_Comm_size(MPI_COMM_WORLD,&size);
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 	
+	// N / size must be integer!
 	if(!(Asize%size)){
 		ifBound = (rank%(size-1))==0;
 		rowCount = Asize / size + 2 - ifBound;
@@ -37,12 +37,11 @@ int main(int argc, char *argv[]){
 		maxiter = 100;
 		}
 	else{
-		printf("\n\nERROR\n\n");
+		printf("\n\nERROR! N / size must be integer!\n\n");
 		return 0;
-	}
-		
-  
+	}  
 	
+	// Initialization
     if(rank==0){
         initA = new double [Asize * Asize];
 		sendcount = new int [size];
@@ -84,6 +83,8 @@ int main(int argc, char *argv[]){
 		MaxNorm = -1.0;
 		ptrB = B;
 		ptrA = A + Asize + 1;
+		
+		// Caculate current ineration
 		for(int i = 0; i < rowCount - 2; i++){
 			for(int j = 0; j < Asize - 2; j++){
 				*ptrB = 1.0/4 * (*(ptrA-1) + *(ptrA + 1) + *(ptrA-Asize) + *(ptrA+Asize));
@@ -96,7 +97,8 @@ int main(int argc, char *argv[]){
 			}
 			ptrA += 2;
 		}
-						
+		
+		// Copy current answer to next iteration
 		ptrB = B;
 		ptrA = A + Asize + 1;
 		for(int i = 0; i < rowCount - 2; i++){
@@ -105,6 +107,7 @@ int main(int argc, char *argv[]){
 			ptrA += 2;
 		}
 		
+		// Fill remaining values
 		if(ifBound){
 		 /* FIXME */
 		 if(rank==0){
@@ -123,15 +126,17 @@ int main(int argc, char *argv[]){
 			MPI_Recv(A + Asize * (rowCount-1) + 1, Asize-2, MPI_DOUBLE, rank + 1, 1, MPI_COMM_WORLD, &stat);
 		}
 		
+		// Find MaxNorm among all nodes.
 		MPI_Reduce(&Norm, &MaxNorm, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 		MPI_Bcast(&MaxNorm, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 		maxiter--;
 	
 	}while(MaxNorm > eps && maxiter);
 	
-
+	// Collect the answer
 	MPI_Gather(A + (rank!=0) * Asize, Asize * Asize / size, MPI_DOUBLE, initA, Asize * Asize / size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
     
+	// Ptint out answer
 	if(rank==0){
 		ptrA = initA;
 		printf("\n\nSolution found\n%d iteration left. Current error is %.4f\n", maxiter, MaxNorm);
@@ -141,7 +146,9 @@ int main(int argc, char *argv[]){
                 printf("%.3f\t", *ptrA++);				
             printf("\n");
         }
-        delete []initA;		
+        delete []initA;	
+		delete []sendcount;
+        delete []displs;		
     }
     delete []A;
     delete []B;
