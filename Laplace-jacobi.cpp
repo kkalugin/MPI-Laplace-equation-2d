@@ -88,7 +88,6 @@ int main(int argc, char *argv[]){
 		for(int i = 0; i < rowCount - 2; i++){
 			for(int j = 0; j < Asize - 2; j++){
 				*ptrB = 1.0/4 * (*(ptrA-1) + *(ptrA + 1) + *(ptrA-Asize) + *(ptrA+Asize));
-				ptrA;
 				Norm = fabs(*ptrB - *ptrA);
 				if(Norm > MaxNorm)
 					MaxNorm = Norm;
@@ -127,11 +126,11 @@ int main(int argc, char *argv[]){
 		}
 		
 		// Find MaxNorm among all nodes.
-		MPI_Reduce(&Norm, &MaxNorm, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-		MPI_Bcast(&MaxNorm, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+		MPI_Reduce(&MaxNorm, &Norm, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+		MPI_Bcast(&Norm, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 		maxiter--;
 	
-	}while(MaxNorm > eps && maxiter);
+	}while(Norm > eps && maxiter);
 	
 	// Collect the answer
 	MPI_Gather(A + (rank!=0) * Asize, Asize * Asize / size, MPI_DOUBLE, initA, Asize * Asize / size, MPI_DOUBLE, 0, MPI_COMM_WORLD);
