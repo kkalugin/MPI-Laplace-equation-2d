@@ -46,42 +46,42 @@ int main(int argc, char *argv[]){
 
 	// Initialization
     if(rank==0){
-		printf("\nInitialization of solving Laplase's equasion. Domain size is %d*%d, number of processors is %d\n\n", Asize, Asize, size);
+	printf("\nInitialization of solving Laplase's equasion. Domain size is %d*%d, number of processors is %d\n\n", Asize, Asize, size);
 
         initA = new double [Asize * Asize];
-		sendcount = new int [size];
+	sendcount = new int [size];
         displs = new int [size];
-		ptrA = initA;
+	ptrA = initA;
 
-		for(int i = 0; i < Asize; i++)
-			*ptrA++ = 1;
+	for(int i = 0; i < Asize; i++)
+		*ptrA++ = 1;
         for(int i = 1; i < Asize - 1; i++){
-			*ptrA++ = 1;
-            for(int j = 1; j < Asize - 1; j++)
-                *ptrA++ = 0;
-			*ptrA++ = 1;
-		}
-		for(int i = 0; i < Asize; i++)
-			*ptrA++ = 1;
-
-		pSend = sendcount;
-		pDispls = displs;
-
-		*pSend++ = rowCount * Asize;
-		*pDispls++ = 0;
-		*pDispls = (rowCount - 2) * Asize;
-		for(int i = 1; i <  size - 1; i++){
-			*pSend++ = (rowCount + 1) * Asize;
-			*++pDispls = displs[1] + i * (rowCount - 1) * Asize;
-		}
-		*pSend = rowCount * Asize;
-
-		printf("\nCalculation started. %d iterations to go\n\n\n", stopiter);
-		/*
-		for(int i = 0; i <  size; i++)
-			printf("\ndispls is %d, sendcound is%d\n", displs[i], sendcount[i]);
-*/
+		*ptrA++ = 1;
+         for(int j = 1; j < Asize - 1; j++)
+         	*ptrA++ = 0;
+		*ptrA++ = 1;
 	}
+	for(int i = 0; i < Asize; i++)
+		*ptrA++ = 1;
+
+	pSend = sendcount;
+	pDispls = displs;
+
+	*pSend++ = rowCount * Asize;
+	*pDispls++ = 0;
+	*pDispls = (rowCount - 2) * Asize;
+	for(int i = 1; i <  size - 1; i++){
+		*pSend++ = (rowCount + 1) * Asize;
+		*++pDispls = displs[1] + i * (rowCount - 1) * Asize;
+	}
+	*pSend = rowCount * Asize;
+
+	printf("\nCalculation started. %d iterations to go\n\n\n", stopiter);
+	/*
+	for(int i = 0; i <  size; i++)
+		printf("\ndispls is %d, sendcound is%d\n", displs[i], sendcount[i]);
+	*/
+    }
 
 	A = new double [rowCount  * Asize];
 	B = new double [ (Asize-2) * (rowCount-2)];
